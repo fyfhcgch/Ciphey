@@ -1,5 +1,6 @@
-# Ciphey - 自动化解密工具
+# Ciphey
 
+本项目是在https://github.com/bee-san/Ciphey的基础上进行改进的。
 Ciphey 是一款使用人工智能和自然语言处理技术的自动化解密工具。输入加密文本，即可获得解密结果。
 
 ## 功能特点
