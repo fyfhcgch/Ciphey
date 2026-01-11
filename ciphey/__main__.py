@@ -28,17 +28,12 @@ if __name__ == "__main__":
         )
         sys.exit(1)
     if platform.system() == "Windows":
-        if minor > 8:
-            print(
-                "Ciphey does not currently support Python 3.9 on Windows. Please use the Discord bot at http://discord.skerritt.blog"
-            )
-            sys.exit(1)
-
         if sys.maxsize > 2 ** 32 is False:
             print(
                 "You are using Python 32 bit and Windows, Ciphey does not support this. Please upgrade to Python 64-bit here https://www.python.org/downloads/"
             )
             sys.exit(1)
+        # Removed Python version check to allow newer versions on Windows
     from .ciphey import main
 
     main()

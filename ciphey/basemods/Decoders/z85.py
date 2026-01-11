@@ -2,7 +2,13 @@ from typing import Dict, Optional
 
 import logging
 from rich.logging import RichHandler
-from zmq.utils import z85
+
+try:
+    from zmq.utils import z85
+    Z85_AVAILABLE = True
+except ImportError:
+    z85 = None
+    Z85_AVAILABLE = False
 
 from ciphey.iface import Config, Decoder, ParamSpec, T, U, registry
 
@@ -13,6 +19,9 @@ class Z85(Decoder[str]):
         """
         Performs Z85 decoding
         """
+        if not Z85_AVAILABLE:
+            logging.debug("Z85 not available (zmq not installed)")
+            return None
         ctext_len = len(ctext)
         if ctext_len % 5:
             logging.debug(

@@ -10,9 +10,15 @@ Github: brandonskerritt
 
 from typing import Dict, List, Optional
 
-import cipheycore
 import logging
 from rich.logging import RichHandler
+
+try:
+    import cipheycore
+    CIPHEYCORE_AVAILABLE = True
+except ImportError:
+    cipheycore = None
+    CIPHEYCORE_AVAILABLE = False
 
 from ciphey.iface import Config, Cracker, CrackInfo, CrackResult, ParamSpec, registry
 
@@ -20,6 +26,14 @@ from ciphey.iface import Config, Cracker, CrackInfo, CrackResult, ParamSpec, reg
 @registry.register
 class Ascii_shift(Cracker[str]):
     def getInfo(self, ctext: str) -> CrackInfo:
+        if not CIPHEYCORE_AVAILABLE:
+            # Return default values when cipheycore is not available
+            return CrackInfo(
+                success_likelihood=0.1,  # Default low likelihood
+                success_runtime=1e-5,
+                failure_runtime=1e-5,
+            )
+        
         analysis = self.cache.get_or_update(
             ctext,
             "cipheycore::simple_analysis",
@@ -38,6 +52,11 @@ class Ascii_shift(Cracker[str]):
         return "ascii_shift"
 
     def attemptCrack(self, ctext: str) -> List[CrackResult]:
+        if not CIPHEYCORE_AVAILABLE:
+            # Return empty list when cipheycore is not available
+            logging.debug("Skipping ASCII shift crack - cipheycore not available")
+            return []
+        
         logging.info(f"Trying ASCII shift cipher on {ctext}")
 
         logging.debug("Beginning cipheycore simple analysis")

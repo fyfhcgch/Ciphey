@@ -10,9 +10,15 @@ Github: brandonskerritt
 from distutils import util
 from typing import Dict, List, Optional, Union
 
-import cipheycore
 import logging
 from rich.logging import RichHandler
+
+try:
+    import cipheycore
+    CIPHEYCORE_AVAILABLE = True
+except ImportError:
+    cipheycore = None
+    CIPHEYCORE_AVAILABLE = False
 
 from ciphey.common import fix_case
 from ciphey.iface import Config, Cracker, CrackInfo, CrackResult, ParamSpec, registry
@@ -21,6 +27,14 @@ from ciphey.iface import Config, Cracker, CrackInfo, CrackResult, ParamSpec, reg
 @registry.register
 class Vigenere(Cracker[str]):
     def getInfo(self, ctext: str) -> CrackInfo:
+        if not CIPHEYCORE_AVAILABLE:
+            # Return default values when cipheycore is not available
+            return CrackInfo(
+                success_likelihood=0.05,  # Low likelihood
+                success_runtime=1e-3,
+                failure_runtime=1e-3,
+            )
+        
         if self.keysize is not None:
             analysis = self.cache.get_or_update(
                 ctext,
@@ -81,8 +95,13 @@ class Vigenere(Cracker[str]):
         return "vigenere"
 
     def crackOne(
-        self, ctext: str, analysis: cipheycore.windowed_analysis_res, real_ctext: str
+        self, ctext: str, analysis: 'cipheycore.windowed_analysis_res', real_ctext: str
     ) -> List[CrackResult]:
+        if not CIPHEYCORE_AVAILABLE:
+            # Return empty list when cipheycore is not available
+            logging.debug("Skipping Vigenere crack - cipheycore not available")
+            return []
+        
         possible_keys = cipheycore.vigenere_crack(
             analysis, self.expected, self.group, self.p_value
         )
@@ -104,6 +123,11 @@ class Vigenere(Cracker[str]):
         ]
 
     def attemptCrack(self, ctext: str) -> List[CrackResult]:
+        if not CIPHEYCORE_AVAILABLE:
+            # Return empty list when cipheycore is not available
+            logging.debug("Skipping Vigenere crack - cipheycore not available")
+            return []
+        
         logging.info("Trying vigenere cipher")
         # Convert it to lower case
         if self.lower:

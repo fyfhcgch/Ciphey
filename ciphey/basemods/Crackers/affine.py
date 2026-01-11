@@ -3,11 +3,17 @@
 
 from typing import Dict, List, Optional
 
-import cipheycore
 import logging
 from rich.logging import RichHandler
 
 from ciphey.common import fix_case
+
+try:
+    import cipheycore
+    CIPHEYCORE_AVAILABLE = True
+except ImportError:
+    cipheycore = None
+    CIPHEYCORE_AVAILABLE = False
 from ciphey.iface import Config, Cracker, CrackInfo, CrackResult, ParamSpec, registry
 from ciphey.mathsHelper import mathsHelper
 
@@ -76,8 +82,41 @@ class Affine(Cracker[str]):
         Analyses the translated text and applies the chi squared test to see if it is a probable plaintext candidate
         Returns the probability of the chi-squared test.
         """
+        if not CIPHEYCORE_AVAILABLE:
+            # Fallback implementation when cipheycore is not available
+            # Just return a basic score based on common English letter frequency
+            return self._fallback_plaintext_probability(translated)
+        
         analysis = cipheycore.analyse_string(translated)
         return cipheycore.chisq_test(analysis, self.expected)
+
+    def _fallback_plaintext_probability(self, translated: str) -> float:
+        """
+        Fallback method to estimate probability when cipheycore is not available
+        """
+        # Basic heuristic: calculate ratio of common English letters
+        if not translated:
+            return 0.0
+        
+        # Count common English letters
+        common_letters = "etaoinshrdlcumwfgypbvkjxqz"
+        common_letters_set = set(common_letters + common_letters.upper())
+        
+        common_count = sum(1 for c in translated if c in common_letters_set)
+        total_count = len(translated)
+        
+        if total_count == 0:
+            return 0.0
+            
+        # Also check for reasonable word structure (spaces, common words)
+        score = common_count / total_count
+        
+        # Boost score if there are spaces (indicating words)
+        if ' ' in translated:
+            score *= 1.2
+            
+        # Limit the score to avoid false positives
+        return min(score, 1.0)
 
     def decrypt(self, text: str, a_inv: int, b: int, m: int) -> str:
         """

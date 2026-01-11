@@ -16,8 +16,10 @@ class HumanChecker(Checker[str]):
 
     def check(self, ctext: str) -> Optional[str]:
         with self._config().pause_spinner_handle():
+            # Use the actual string content instead of its repr to handle Unicode correctly
+            display_text = ctext
             response = console.input(
-                f"Possible plaintext: [blue bold]{escape(ctext.__repr__())}[/blue bold] ([green]y[/green]/[red]N[/red]): "
+                f"Possible plaintext: [blue bold]{escape(display_text)}[/blue bold] ([green]y[/green]/[red]N[/red]): "
             )
         if response == "y":
             return ""

@@ -7,6 +7,7 @@ from .format import JsonChecker
 from .human import HumanChecker
 from .quadgrams import Quadgrams
 from .regex import RegexList
+from .unicode_text import UnicodeChecker
 from .what import What
 
 
@@ -43,7 +44,10 @@ class EzCheck(Checker[str]):
 
         # We need to modify the config for each of the objects
 
-        # First PyWhat, as it's the fastest
+        # First Unicode checker, to catch non-English text like Chinese
+        self.checkers.append(config(UnicodeChecker))
+
+        # Next, PyWhat, as it's the fastest
         self.checkers.append(config(What))
 
         # Next, the json checker
